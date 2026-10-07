@@ -1,0 +1,24 @@
+{
+  "name": "vh-log",
+  "version": "0.1.0",
+  "description": "VH Log — Verifiable History Log specification",
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs",
+    "edit": "node edit.mjs"
+  },
+  "keywords": [
+    "verifiable history",
+    "VH-Log",
+    "spec"
+  ],
+  "author": "Stephen Curran",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/swcurran/VH-Log/issues"
+  },
+  "homepage": "https://github.com/swcurran/VH-Log",
+  "dependencies": {
+    "spec-up": "^0.11.6"
+  }
+}
