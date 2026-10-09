@@ -742,9 +742,18 @@ The following lists the [[ref: parameters]], their data types, and enumerated va
       **MUST** reject a [[ref: log entry]] that includes it.
     - The [[ref: specialisation]] **MUST** define the acceptable values of the
       designated parameter, and for each value **MUST** state the VH-Log
-      version it implies and the cryptographic algorithms it permits. These
-      **MUST NOT** include algorithms not permitted by the implied VH-Log
-      version.
+      version it implies and the cryptographic algorithms it permits.
+    - The permitted hash algorithms **MUST NOT** include any not permitted by
+      the implied VH-Log version.
+    - The permitted [[ref: Data Integrity]] cryptosuites **MAY** include
+      cryptosuites not permitted by the implied VH-Log version. Each such
+      cryptosuite **MUST** be identified by its exact `cryptosuite` value and
+      a published specification, and **MUST** verify proofs with a public key
+      that can be represented as a [[ref: multikey]], so that `updateKeys`,
+      `nextKeyHashes` and witness keys are processed as defined in this
+      specification. The [[ref: specialisation]] **MUST** state, for each
+      value, which cryptosuites are permitted for log-entry proofs and which
+      for witness proofs.
     - Moving to a later value **MUST NOT** imply a lower VH-Log version.
   - Acceptable values defined by this specification:
     - `vh-log:1.0`
@@ -849,7 +858,8 @@ Cryptographic agility is achieved through the following mechanisms:
   initial log entry and may be updated in later entries to adopt newer
   versions.
 
-- **Version-specific algorithm policies:** Each version of this specification
+- **Version-specific algorithm policies:** Each version of this specification,
+  and each value of a [[ref: specialisation]]'s designated version parameter,
   defines the permitted cryptographic algorithms and suites, constraining what
   [[ref: Log Controllers]] may use and limiting verification requirements on
   [[ref: Resolvers]].
