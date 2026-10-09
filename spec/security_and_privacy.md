@@ -97,6 +97,11 @@ The following classes of attack apply to all log operations:
   [resolution option](#resolution-options), naming [[ref: watchers]] the
   caller chooses, gives the stronger check against a [[ref: Log Controller]]
   showing different logs to different parties.
+  For entries governed by an authoritative source, the source instead decides
+  which branch forms the log, and diverging copies are discarded rather than
+  failing resolution ([Authoritative Sources](#authoritative-sources)). A
+  split view then lasts only until an entry is accepted from the source, but
+  whoever first gets an entry accepted decides the log.
 
 - **Server-Side Request Forgery (SSRF)** — A resolver acts as an HTTP client
   for a location derived from an untrusted log identifier, and, with the
@@ -275,6 +280,12 @@ verified proofs from distinct witness identifiers, not total proof count; each
 accepted proof's `versionId` corresponds to an entry in the log file being
 verified; proofs verified using the method defined by the [[ref:
 specialisation]].
+
+**Authoritative source:** log assembled from the source by the
+specialisation's rules; specialisation's own version parameter required;
+resolution fails if the entries the source includes cannot be established; a
+diverging copy or a retained `versionId` not in the assembled log is reported,
+not treated as a fork.
 
 **Failure modes:** unknown parameter values, malformed `witness`, hash algorithm
 mismatch, and cryptosuite mismatch all fail resolution — never silently
