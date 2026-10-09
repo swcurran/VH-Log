@@ -1258,8 +1258,17 @@ The following process is used to witness a log entry update:
   to witnessing, and **MUST** confirm that the controller-supplied candidate entry
   verifies as the next entry to that log.
 - Each [[ref: witness]] **MUST** independently verify the candidate entry using
-  every step in [Read (Resolve)](#read-resolve). Any failure **MUST** cause the
-  witness to refuse approval.
+  the verification requirements in [Read (Resolve)](#read-resolve), except
+  that the candidate entry is not required to have a [[ref: threshold]] of
+  witness proofs before the witness approves it. This exception applies only
+  to pre-publication verification of the candidate entry. The witness **MUST**
+  fully verify the preceding published log, including its applicable witness
+  proof requirements, before approving the candidate. All other verification
+  requirements, including validation of the candidate's `witness` parameter
+  and the [Witness Lists](#witness-lists) activation rules, still apply.
+  Any failure of these checks **MUST** cause the witness to refuse approval.
+  Publication and resolution still require the applicable [[ref: threshold]]
+  as defined in [Witnesses](#witnesses).
 - A [[ref: witness]] **MUST NOT** approve more than one [[ref: log entry]] with
   the same predecessor.
 - Each [[ref: witness]] determines (based on the governance of the ecosystem)
