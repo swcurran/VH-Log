@@ -2,6 +2,13 @@
 
 The following lists the substantive changes in each version of the specification.
 
+- Unreleased (proposed)
+  - Adds [[ref: editor keys]] ([Editor Keys](#editor-keys)): a new
+    `editorKeys` parameter, set only by [[ref: controller entries]], whose
+    keys can sign [[ref: editor entries]] that change only the
+    [[ref: state]] object. Requires the new `vh-log:1.1` [[ref: logVersion]]
+    value. Under `vh-log:1.0`, every entry is a [[ref: controller entry]], as
+    before.
 - Version 0.1
   - Initial pre-draft. Extracted and generalised the log mechanism from the
     [did:webvh v1.0 specification](https://identity.foundation/didwebvh/),

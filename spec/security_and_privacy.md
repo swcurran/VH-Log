@@ -98,6 +98,68 @@ The following classes of attack apply to all log operations:
   caller chooses, gives the stronger check against a [[ref: Log Controller]]
   showing different logs to different parties.
 
+- **Misuse or compromise of an editor key** — An [[ref: editor key]] can sign
+  only [[ref: editor entries]], which change the [[ref: state]] object and
+  nothing else ([Verifying Editor Entries](#verifying-editor-entries)). An
+  [[ref: editor]], or an attacker holding an [[ref: editor key]], therefore
+  cannot deactivate the log, freeze it by emptying `updateKeys`, replace or
+  remove the [[ref: update keys]], change `nextKeyHashes`, add or remove
+  [[ref: editors]], or change the [[ref: witnesses]] or any other
+  [[ref: parameter]], and so cannot lock the [[ref: Log Controller]] out of
+  the log. The following risks remain:
+    - **Unauthorized state changes until revocation.** A compromised
+      [[ref: editor key]] can change the [[ref: state]] object until a
+      [[ref: controller entry]] removes it from `editorKeys`. Editor keys are
+      not pre-rotated ([Editor Keys and
+      Pre-Rotation](#editor-keys-and-pre-rotation)), so
+      [[ref: pre-rotation]] does not limit this. Every
+      [[ref: editor entry]] remains in the log after revocation, and its
+      [[ref: state]] object remains the [[ref: state]] for that version.
+    - **Backdating after revocation.** Revocation takes effect from the entry
+      after the revoking [[ref: controller entry]]. A revoked
+      [[ref: editor]] can still sign an entry whose predecessor is the entry
+      before the revocation, with a `versionTime` before the revocation,
+      because `versionTime` is only a claim by the signer. That entry
+      competes with the revoking entry for the same predecessor, so it forks
+      the log. [[ref: Witnesses]] are the defence: a [[ref: witness]] that has
+      approved the revoking entry does not approve a second entry with the
+      same predecessor ([Witnessing a Log Entry
+      Update](#witnessing-a-log-entry-update)), so when the
+      [[ref: threshold]] is a majority of the [[ref: witnesses]], the
+      backdated entry cannot be [[ref: witnessed]]. Without
+      [[ref: witnesses]], a [[ref: Resolver]] that is shown only the backdated
+      copy accepts it, and comparing copies ([Comparing Copies of a
+      Log](#comparing-copies-of-a-log)) detects the fork. Revocation does not
+      remove this ability: the backdated entry remains valid indefinitely, so
+      any [[ref: Resolver]] that sees it alongside the published log fails
+      resolution for every version of the log.
+    - **Splitting witness approvals.** Competing [[ref: editor entries]]
+      can split the [[ref: witnesses]]' approvals so that no entry reaches
+      the [[ref: threshold]]. The [[ref: Log Controller]] can still update
+      the log, because a [[ref: witness]] may approve a
+      [[ref: controller entry]] after approving an [[ref: editor entry]] with
+      the same predecessor ([Witnessing a Log Entry
+      Update](#witnessing-a-log-entry-update)). There is a race: if one of the
+      [[ref: editor entries]] has in fact reached the [[ref: threshold]] but
+      is not yet published, and the [[ref: Log Controller]] obtains a
+      [[ref: threshold]] for its own entry, two [[ref: witnessed]] entries
+      with the same predecessor exist. If both are published, the log is
+      forked and fails resolution ([Comparing Copies of a
+      Log](#comparing-copies-of-a-log)). A [[ref: Log Controller]] reduces
+      this risk by checking the published log, and the [[ref: editors]], for
+      a [[ref: witnessed]] entry before creating its own.
+    - **Forking to deny resolution.** Without [[ref: witnesses]], an
+      [[ref: editor]] can deliberately give different parties entries with the
+      same predecessor, and any [[ref: Resolver]] that sees more than one
+      fails resolution ([Concurrent Editor
+      Entries](#concurrent-editor-entries)). For this reason,
+      [[ref: witnesses]] are recommended for logs with [[ref: editors]].
+    - **Unrevocable editors after freezing.** If the
+      [[ref: Log Controller]] empties `updateKeys` without also emptying
+      `editorKeys`, the [[ref: editors]] can continue to update the
+      [[ref: state]] object and can no longer be removed
+      ([Deactivate](#deactivate)).
+
 - **Server-Side Request Forgery (SSRF)** — A resolver acts as an HTTP client
   for a location derived from an untrusted log identifier, and, with the
   `extraWatchers` [resolution option](#resolution-options), for
@@ -123,6 +185,9 @@ Residual risks include:
   - While this can impact access to the log file and associated files, it does
     not compromise the integrity of the log entries themselves, nor the
     verifiability of the log.
+- Compromise of [[ref: editor key]] private keys, which allows the
+  [[ref: state]] object to be changed until the [[ref: Log Controller]]
+  removes the key (see Misuse or compromise of an editor key, above).
 - Compromise of [[ref: Log Controller]] private keys.
   - A [[ref: Log Controller]] can mitigate this risk through the use of
     [pre-rotation keys](#pre-rotation-key-hash-generation-and-verification),
@@ -147,7 +212,9 @@ Residual risks include:
 All log operations (create, update, deactivate) are integrity-protected by the
 cryptographic verification of log entries. Update authentication is provided by
 verifying the [[ref: Log Controller]]'s proof(s) against the active `updateKeys`
-in the log [[ref: parameters]] (see [Authorized Keys](#authorized-keys)).
+in the log [[ref: parameters]] (see [Authorized Keys](#authorized-keys)), or,
+for an [[ref: editor entry]], the [[ref: editor]]'s proof(s) against the active
+`editorKeys` (see [Verifying Editor Entries](#verifying-editor-entries)).
 
 Because a VH-Log log and its entries are self-certifying, they can be verified
 and trusted regardless of how they are retrieved — directly from the host, via a
@@ -158,7 +225,7 @@ independent of the transport channel.
 ### Authentication Characteristics
 
 The authentication of log updates is based on possession of the private keys
-associated with the update and pre-rotation keys. The security of the log
+associated with the update, pre-rotation and editor keys. The security of the log
 therefore depends on the strength of these keys, their secure storage, and the
 cryptographic algorithms used.
 
@@ -194,7 +261,8 @@ Controllers]] that use them to prevent this.
 
 The following data is protected:
 
-- **Log entries** — Signed by the [[ref: Log Controller]]'s keys.
+- **Log entries** — Signed by the [[ref: Log Controller]]'s keys, or, for
+  [[ref: editor entries]], by an [[ref: editor]]'s key.
 - **Witness proofs** — Signed by witness keys.
 
 These signatures provide integrity and update authentication but not
@@ -266,8 +334,12 @@ UTC ISO8601 `versionTime`; every `versionTime` ≤ now (bounded skew);
 
 **Keys & proofs:** every proof has `type: DataIntegrityProof`, the `cryptosuite`
 and `proofPurpose` required by the active [[ref: logVersion]]; `verificationMethod` key
-in active `updateKeys`; under pre-rotation, `updateKeys` explicit in every entry
-and every key hashes to a value in previous `nextKeyHashes`.
+in active `updateKeys` (or, for an editor entry, in the `editorKeys` active
+before the entry, with `parameters` exactly `{}`); no entry mixes update-key
+and editor-key proofs; `editorKeys` only under `vh-log:1.1` or later, set only
+in controller entries, and disjoint from `updateKeys`; under pre-rotation,
+`updateKeys` explicit in every controller entry and every key hashes to a value
+in the `nextKeyHashes` of the most recent controller entry.
 
 **Witnesses:** `threshold` is positive integer ≤ count of distinct
 `witnesses[].id`; all `witnesses[].id` distinct; threshold met by counting
