@@ -35,9 +35,14 @@ Each entry is a JSON object consisting of the following properties.
    timestamp **MUST** be the time the entry will be retrieved by a [[ref:
    witness]] or [[ref: Resolver]], or before. The timestamp **MUST** be
    expressed in whole seconds, with no fractional seconds (for example,
-   `2025-04-01T17:39:50Z`). Because each entry's `versionTime` must be later
-   than the previous entry's, consecutive entries are at least one second
-   apart.
+   `2025-04-01T17:39:50Z`). A [[ref: specialisation]] **MAY** permit
+   fractional seconds, and if it does **MUST** define the maximum number of
+   fractional digits (for example, three, as in `2025-04-01T17:39:50.123Z`).
+   A [[ref: specialisation]] **MAY** also define a minimum interval between
+   the `versionTime` values of consecutive entries. Because each entry's
+   `versionTime` must be later than the previous entry's, consecutive entries
+   are at least one second apart unless the [[ref: specialisation]] permits
+   fractional seconds.
 3. The JSON object `parameters` contains the configurations set by the [[ref:
    Log Controller]] to be used in the processing of current and future [[ref:
    log entries]]. Permitted `parameters` are defined in the
@@ -47,16 +52,6 @@ Each entry is a JSON object consisting of the following properties.
    the [[ref: specialisation]].
 5. The JSON array `proof` contains a [[ref: Data Integrity]] proof created for
    the entry and signed by a key authorized to update the log.
-
-::: issue Minimum time between entries
-
-Requiring whole-second `versionTime` values limits a log to at most one entry
-per second. Some [[ref: specialisations]] may need entries more often than
-that, and others may want a longer minimum interval. Should the minimum
-interval between entries, and therefore the `versionTime` precision, be
-defined by the [[ref: specialisation]], with one second as the default?
-
-:::
 
 After creation, each entry has (per the [[ref: JSON Lines]] specification) all
 extra whitespace removed, a `\n` character appended, and the result added to the
@@ -134,8 +129,9 @@ Creating a [[ref: log]] is done by carrying out the following steps.
 
    1. The value of `versionId` **MUST** be the placeholder literal `"{SCID}"`.
    2. The value of `versionTime` **MUST** be a valid UTC [[ref: ISO8601]]
-      date/time string in whole seconds, and the represented time **MUST** be
-      before or equal to the current time.
+      date/time string at the precision described in
+      [The VH-Log File](#the-vh-log-file), and the represented time **MUST**
+      be before or equal to the current time.
    3. The value of the `parameters` property **MUST** be a JSON object as
       defined in the [VH-Log Parameters](#vh-log-parameters) section. All
       required values in the first entry **MUST** be present. Where the [[ref:
@@ -256,10 +252,16 @@ For each entry:
 4. The `versionTime` **MUST** be a valid UTC [[ref: ISO8601]] string with
    explicit `Z` (or `+00:00`); values without a zone designator, or expressing
    a non-UTC zone, **MUST** be rejected.
-   - The `versionTime` **MUST** be in whole seconds. Values with fractional
-     seconds **MUST** be rejected.
+   - The `versionTime` **MUST** be in whole seconds, unless the
+     [[ref: specialisation]] permits fractional seconds. Values with
+     fractional seconds, or with more fractional digits than the
+     [[ref: specialisation]] permits, **MUST** be rejected.
    - The `versionTime` of **every** entry **MUST** be strictly greater than the
-     immediately preceding entry's. Equal timestamps **MUST** be rejected.
+     immediately preceding entry's, comparing the represented times rather
+     than the strings. Equal timestamps **MUST** be rejected.
+   - If the [[ref: specialisation]] defines a minimum interval between
+     entries, an entry whose `versionTime` is less than that interval after
+     the preceding entry's **MUST** be rejected.
    - The `versionTime` of every entry **MUST NOT** be more than a small,
      implementation-defined tolerance in the future relative to the [[ref:
      Resolver]]'s current time. [[ref: Resolvers]] **SHOULD** use a tolerance of
@@ -575,8 +577,10 @@ witnessed]] (if necessary), appended to the existing log file, and published:
    1. The value of `versionId` **MUST** be the value of `versionId` from the
       *previous* [[ref: log entry]].
    2. The `versionTime` **MUST** be a [[ref: ISO8601]] format UTC timestamp
-      in whole seconds, strictly greater than the previous entry's
-      `versionTime`, and **MUST** be
+      at the precision described in [The VH-Log File](#the-vh-log-file),
+      strictly greater than the previous entry's `versionTime` (and at least
+      any minimum interval the [[ref: specialisation]] defines after it), and
+      **MUST** be
       the time the entry will be retrieved by a [[ref: witness]] or [[ref:
       Resolver]], or before.
    3. The [[ref: parameters]] as a JSON object.
@@ -879,7 +883,8 @@ Where:
 
    - The `versionId` entry, which **MUST** be `{SCID}`.
    - The `versionTime` entry, which **MUST** be a string that is the current
-     time in UTC [[ref: ISO8601]] format, in whole seconds.
+     time in UTC [[ref: ISO8601]] format, at the precision described in
+     [The VH-Log File](#the-vh-log-file).
    - The complete `parameters` for the initial [[ref: log entry]] as defined by
      the [[ref: Log Controller]], with the placeholder wherever the [[ref: SCID]]
      will eventually be placed.

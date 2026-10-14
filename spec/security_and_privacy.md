@@ -257,7 +257,9 @@ decoding (`.`, `..`, `/`, `\`, NUL, leading/trailing whitespace); enforce max
 response size with `Content-Length` first; enforce a wall-clock timeout.
 
 **Log structure:** unbroken `1, 2, 3, ...` version sequence; strictly increasing
-UTC ISO8601 `versionTime`; every `versionTime` ≤ now (bounded skew);
+UTC ISO8601 `versionTime`, in whole seconds unless the specialisation permits
+fractional seconds, and at least any specialisation-defined minimum interval
+apart; every `versionTime` ≤ now (bounded skew);
 [[ref: entry hash]] chain verified for every entry; [[ref: logVersion]] is an explicitly supported value
 (never silently downgraded).
 
