@@ -107,7 +107,10 @@ The following classes of attack apply to all log operations:
   SSRF defences. They are stated normatively because common implementations
   have been found vulnerable to at least one of: following redirects,
   accepting IP literals, case-sensitive percent-decoding, and checking values
-  before rather than after decoding.
+  before rather than after decoding. A [[ref: specialisation]] that defines a
+  location not reached over HTTPS takes on the equivalent defences for that
+  location, including bounding the size and duration of retrieval
+  ([The VH-Log File](#the-vh-log-file)).
 
 - **Other attacks** — The VH-Log verification process mitigates downgrade
   attacks on cryptographic algorithms and prevents poisoning of log or witness

@@ -72,7 +72,17 @@ affect the uniqueness or verifiability of a log.
 
 Log files and witness files **MUST** be published and retrieved as described
 in [Publishing and Retrieving Log Resources](#publishing-and-retrieving-log-resources)
-whenever they are transferred over a network.
+whenever they are transferred over a network, except at a location that a
+[[ref: specialisation]] defines as not reached over HTTPS.
+
+A [[ref: specialisation]] **MAY** define a location that is not reached over
+HTTPS, such as content-addressed storage or a distributed ledger. A
+[[ref: specialisation]] that does so **MUST** define how log resources are
+published to and retrieved from that location, and how a [[ref: Resolver]]
+limits what it retrieves and how long retrieval takes, in place of the HTTPS
+requirements in
+[Publishing and Retrieving Log Resources](#publishing-and-retrieving-log-resources).
+Verification of the retrieved log is unchanged.
 
 ::: example
 
@@ -1408,7 +1418,11 @@ and other components:
 This section applies whenever a log file, witness file, or other log resource
 is published to, or retrieved from, a network location. A [[ref:
 specialisation]] defines where those locations are; this section defines how
-they are served and fetched.
+they are served and fetched. For a location that a [[ref: specialisation]]
+defines as not reached over HTTPS, the [[ref: specialisation]]'s own
+publishing and retrieval rules apply instead, as described in
+[The VH-Log File](#the-vh-log-file). Locations reached over HTTPS, including
+[[ref: watcher]] endpoints, always follow this section.
 
 #### Publishing Log Resources
 
