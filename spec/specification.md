@@ -62,6 +62,28 @@ After creation, each entry has (per the [[ref: JSON Lines]] specification) all
 extra whitespace removed, a `\n` character appended, and the result added to the
 log file for publication.
 
+A [[ref: specialisation]] **MAY** define another encoding in which log entries
+are stored or transferred, such as a binary encoding of each entry, or a log
+divided across several resources that each hold some of its entries. A
+[[ref: specialisation]] that does so **MUST** define how the encoded form is
+decoded into the ordered list of JSON [[ref: log entries]] described in this
+section. Decoding **MUST** be deterministic, so that every
+[[ref: Resolver]] decodes the same encoded form into the same
+[[ref: log entries]]. For such a log:
+
+- [[ref: SCID]] generation, [[ref: entry hash]] generation and proofs are
+  computed and verified over the decoded JSON [[ref: log entries]], exactly as
+  for a log file. The encoding plays no part in verification.
+- Decoding an entry **MAY** depend on earlier entries, as when an encoded
+  entry holds only the changes from the entry before it. The
+  [[ref: specialisation]] **MUST** define which earlier entries decoding uses,
+  and those entries **MUST** be decoded and verified first.
+- A [[ref: Resolver]] **MUST** reject an encoded entry that cannot be decoded,
+  or that decodes to an invalid [[ref: log entry]].
+- Wherever this specification requires a log file in [[ref: JSON Lines]]
+  format, such as when a [[ref: watcher]] serves a copy of the log, the log
+  file is the decoded [[ref: log entries]] serialised as described above.
+
 The default name of the log file is `vh-log.jsonl`. A [[ref: specialisation]]
 **MAY** define a different resource name. The location of the log file is defined
 by the [[ref: specialisation]]. The location is used only to find the log; it
