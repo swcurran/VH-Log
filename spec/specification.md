@@ -98,6 +98,66 @@ algorithm in this specification.
 
 :::
 
+#### Authoritative Sources
+
+A [[ref: specialisation]] **MAY** define an authoritative source for a log,
+such as a blockchain, that determines which entries form the log when
+competing entries with the same predecessor exist. A specialisation that does
+so **MUST** define:
+
+- How the log is assembled from the authoritative source. A source can record
+  more than one entry with the same predecessor, so the specialisation's rules
+  decide which recorded entries are accepted; only accepted entries form the
+  log.
+- Which entries the authoritative source governs. These can include entries
+  published before the log was first recorded in the source.
+- How a [[ref: Resolver]] handles a change in what the source records, such as
+  a blockchain reorganisation.
+
+The specialisation **MUST** also designate its own version parameter, as
+described for [[ref: logVersion]] in [VH-Log Parameters](#vh-log-parameters),
+and the value in the log's first entry **MUST** identify a version of the
+specialisation that defines the authoritative source. A [[ref: Resolver]] that
+does not implement the specialisation then rejects the log, rather than
+resolving it as though no authoritative source were defined.
+
+For entries governed by an authoritative source:
+
+- The log consists of the entries assembled from the authoritative source,
+  which is the reference copy described in
+  [Comparing Copies of a Log](#comparing-copies-of-a-log). Every other
+  verification step in this specification, including the ordering of
+  `versionTime`, applies to the assembled log.
+- A copy of the log that diverges from the assembled log is discarded and does
+  not cause resolution to fail. The [[ref: Resolver]] **SHOULD** report it
+  with the `superseded` status and the `copy-superseded` warning described in
+  [Resolution Result](#resolution-result).
+- A `versionId` retained from a previous resolution that is not in the
+  assembled log does not cause resolution to fail. The [[ref: Resolver]]
+  **SHOULD** report it with the `authoritative-source-changed` warning.
+- If the [[ref: Resolver]] cannot establish which entries the authoritative
+  source includes, for example because the source is unreachable or
+  incomplete, it **MUST** fail resolution. A copy of the log is not a
+  substitute for the source.
+- The requirements in [Update](#update) that a [[ref: Log Controller]] retain
+  every published entry and not publish two entries with the same predecessor
+  do not apply to entries the assembled log does not include.
+- An entry that deactivates the log takes effect only once it is in the
+  assembled log.
+
+The rules for [[ref: witnesses]] are unchanged: a witness **MUST NOT** approve
+more than one entry with the same predecessor, even where an authoritative
+source would settle between them.
+
+An authoritative source settles competing entries, so a fork no longer makes
+the log unresolvable. The trade-off is that the authority of those entries
+then depends on the authoritative source as well as on the proofs: the first
+entry signed by an authorized key that the specialisation's rules accept from
+the source determines the log. Someone holding a compromised key can take
+control of the log by getting an entry accepted first. A log with an
+authoritative source **SHOULD** use [[ref: pre-rotation]], so that the active
+keys alone cannot sign an entry that would be accepted.
+
 ### Log Operations
 
 #### Create
@@ -372,6 +432,10 @@ it was retrieved from) and **MUST** include the version number of the first
 that entry. How the error is returned is defined by the
 [[ref: specialisation]].
 
+This does not apply where the copies, or a retained `versionId` and the
+reference copy, diverge at an entry governed by an authoritative source. The
+rules in [Authoritative Sources](#authoritative-sources) apply instead.
+
 These checks rely on two properties of the log. Each [[ref: entry hash]]
 covers the previous entry's `versionId`, so equal `versionId` values at entry
 `k` mean the two copies commit to the same history up to and including entry
@@ -530,6 +594,9 @@ copy:
     reference copy.
   - `behind` — The copy matches the reference copy but has fewer entries.
   - `invalid` — The copy failed verification and was discarded.
+  - `superseded` — The copy diverges from the log assembled from an
+    authoritative source and was discarded, as described in
+    [Authoritative Sources](#authoritative-sources).
   - `unavailable` — The copy could not be retrieved, or the
     [[ref: Resolver]] declined to retrieve it, as described in
     [Resolution Options](#resolution-options).
@@ -551,6 +618,12 @@ where there is one.
 - `retained-version-not-found` — The reference copy has fewer entries than a
   `versionId` retained from a previous resolution of the log, as described in
   [Comparing Copies of a Log](#comparing-copies-of-a-log).
+- `copy-superseded` — A copy has `status` `superseded`. The message includes
+  the version number of the first [[ref: log entry]] at which the copy
+  diverges from the assembled log.
+- `authoritative-source-changed` — A `versionId` retained from a previous
+  resolution of the log is not in the log assembled from an authoritative
+  source, as described in [Authoritative Sources](#authoritative-sources).
 
 A [[ref: specialisation]] **MAY** define additional warning codes. How
 `copies` and `warnings` are represented in the [[ref: specialisation]]'s
@@ -608,6 +681,8 @@ most recently published: every published [[ref: log entry]] is retained, and
 the new [[ref: log entry]]'s predecessor is the last published [[ref: log
 entry]]. A [[ref: Log Controller]] **MUST NOT** publish, or give to any party,
 two different [[ref: log entries]] with the same predecessor.
+[Authoritative Sources](#authoritative-sources) describes exceptions to both
+requirements.
 
 #### Deactivate
 
