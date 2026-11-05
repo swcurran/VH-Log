@@ -32,7 +32,8 @@ The following is a summary of how VH-Log works:
    - `state` — the new version of the [[ref: state]] object. The type and schema
      of the [[ref: state]] object is defined by the [[ref: specialisation]].
    - `proof` — one or more [[ref: Data Integrity]] proofs signed by an authorised
-     [[ref: update key]].
+     [[ref: update key]] or, for an entry that changes only the
+     [[ref: state]] object, an authorised [[ref: editor key]].
 
 3. When creating the first entry, the [[ref: Log Controller]] uses the placeholder
    string `{SCID}` wherever the [[ref: SCID]] will eventually appear, calculates
@@ -43,7 +44,9 @@ The following is a summary of how VH-Log works:
    signed by an authorised [[ref: update key]], to the log file and publishes the
    updated file. If [[ref: witnesses]] are configured, the required threshold of
    witness proofs must be collected and published before the updated log is made
-   available.
+   available. The [[ref: Log Controller]] can also authorise [[ref: editors]],
+   whose [[ref: editor keys]] can sign entries that change the [[ref: state]]
+   object but not the [[ref: parameters]] that control the log.
 
 5. A [[ref: Resolver]] retrieves the log file from whatever location the
    [[ref: specialisation]] defines, then processes each [[ref: log entry]] in
