@@ -1,0 +1,65 @@
+{
+  "plugins": [
+    "./spec-refs.mjs"
+  ],
+  "specs": [
+    {
+      "title": "The VH (Verifiable History) Log (Editors Draft)",
+      "spec_directory": "./spec",
+      "markdown_paths": [
+        "header.md",
+        "abstract.md",
+        "overview.md",
+        "specification.md",
+        "security_and_privacy.md",
+        "definitions.md",
+        "references.md",
+        "version.md"
+      ],
+      "source": {
+        "host": "github",
+        "account": "swcurran",
+        "repo": "VH-Log"
+      },
+      "output_path": "./next",
+      "spec_refs": [
+        {
+          "multiformats": {
+            "href": "https://datatracker.ietf.org/doc/draft-multiformats-multibase/08/",
+            "title": "Multiformats",
+            "rawDate": "2024-02-21",
+            "authors": [
+              "Juan Benet",
+              "Manu Sporny"
+            ],
+            "status": "Internet Draft"
+          }
+        },
+        {
+          "di-eddsa-v1.0": {
+            "href": "https://www.w3.org/TR/vc-di-eddsa",
+            "title": "Data Integrity EdDSA Cryptosuites v1.0",
+            "rawDate": "2024-12-08",
+            "authors": [
+              "Dave Longley",
+              "Manu Sporny"
+            ],
+            "status": "W3C Technical Recommendation"
+          }
+        },
+        {
+          "draft-msporny-base58-03": {
+            "href": "https://datatracker.ietf.org/doc/html/draft-msporny-base58-03",
+            "title": "The Base58 Encoding Scheme",
+            "rawDate": "2021-03-31",
+            "authors": [
+              "S. Nakamoto",
+              "Manu Sporny"
+            ],
+            "status": "Internet Draft"
+          }
+        }
+      ]
+    }
+  ]
+}
